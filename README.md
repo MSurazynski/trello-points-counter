@@ -2,7 +2,7 @@
 A simple python script that computes card points statistics for one trello board.
 
 It searches for pattern in the card title
-``['['number']']``
+`\[\d+\]`
 
 It computes total points, points on time, points overdue and points per member. It also updates a card with the computed stats.
 
