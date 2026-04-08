@@ -140,8 +140,9 @@ for member_id, points in members_ids_to_points.items():
     print(members_id_to_name[member_id], ":", points)
 
 date_and_time = datetime.datetime.now()
+print(f"Ostatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 # Update stats card with computed stats
-update_stats_card("Statystyki", f"Łączna ilość puntków: {grand_points_sum}\nPunkty zdobyte o czase: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\nPunkty zodbyte po czasie: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\n\nPunkty zdobyte przez osoby o czasie:\n" + "\n".join([f"{members_id_to_name[member_id]}: {points}" for member_id, points in members_ids_to_points.items()]), f"\nOstatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}")
-
+update_stats_card("Statystyki", f"Łączna ilość puntków: {grand_points_sum}\nPunkty zdobyte o czase: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\nPunkty zodbyte po czasie: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\n\nPunkty zdobyte przez osoby o czasie:\n" + "\n".join([f"{members_id_to_name[member_id]}: {points}" for member_id, points in members_ids_to_points.items()]) + f"\n\nOstatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
 
