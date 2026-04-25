@@ -1,34 +1,35 @@
 import requests
+from zoneinfo import ZoneInfo
 import json
 import config
 import re
 import datetime
 
+
 def update_stats_card(name, desc):
     """
-    Updates a card with given name and description in the list with id config.STATS_LIST.
+    Updates a card with given name and description.
     """
 
     url = f"https://api.trello.com/1/cards/{config.STATS_CARD}"
 
-    headers = {
-        "Accept": "application/json"
-    }
+    headers = {"Accept": "application/json"}
 
     query = {
-        'idList': config.STATS_LIST,
-        'key': config.API_KEY,
-        'token': config.API_TOKEN,
-        'name': name,
-        'desc': desc,
+        "key": config.API_KEY,
+        "token": config.API_TOKEN,
+        "name": name,
+        "desc": desc,
     }
 
-    response = requests.request(
-        "PUT",
+    response = requests.put(
         url,
         headers=headers,
-        params=query
+        params=query,
+        timeout=10,
     )
+
+    response.raise_for_status()
 
 
 def get_lists():
@@ -38,21 +39,12 @@ def get_lists():
 
     url = f"https://api.trello.com/1/boards/{config.BOARD_ID}/lists"
 
-    headers = {
-        "Accept": "application/json"
-    }
+    headers = {"Accept": "application/json"}
 
-    query = {
-        'key': config.API_KEY,
-        'token': config.API_TOKEN
-    }
+    query = {"key": config.API_KEY, "token": config.API_TOKEN}
 
-    response = requests.request(
-        "GET",
-        url,
-        headers=headers,
-        params=query
-    )
+    response = requests.request("GET", url, headers=headers, params=query)
+
 
 def get_cards():
     """
@@ -60,41 +52,25 @@ def get_cards():
     """
     url = f"https://api.trello.com/1/boards/{config.BOARD_ID}/cards/visible"
 
-    headers = {
-        "Accept": "application/json"
-    }
+    headers = {"Accept": "application/json"}
 
-    query = {
-        'key': config.API_KEY,
-        'token': config.API_TOKEN
-    }
+    query = {"key": config.API_KEY, "token": config.API_TOKEN}
 
-    response = requests.request(
-        "GET",
-        url,
-        headers=headers,
-        params=query
-    )
+    response = requests.request("GET", url, headers=headers, params=query)
 
     return response.text
 
-def get_members ():
+
+def get_members():
     """
     Returns list of members of the board with given id.
     """
 
     url = f"https://api.trello.com/1/boards/{config.BOARD_ID}/members"
 
-    query = {
-        'key': config.API_KEY,
-        'token': config.API_TOKEN
-    }
+    query = {"key": config.API_KEY, "token": config.API_TOKEN}
 
-    response = requests.request(
-        "GET",
-        url,
-        params=query
-    )
+    response = requests.request("GET", url, params=query)
 
     members_id_to_name = {}
     members_ids_to_points = {}
@@ -116,7 +92,7 @@ points_on_overdue = 0
 for card in json.loads(get_cards()):
 
     # Find point value of the card
-    numbers = re.findall(r'\[(\d+)\]', card.get("name", ""))
+    numbers = re.findall(r"\[(\d+)\]", card.get("name", ""))
 
     # If point values exists, take the first one
     if len(numbers) > 0:
@@ -131,18 +107,30 @@ for card in json.loads(get_cards()):
 
 # Print stats
 print("Total points:", grand_points_sum)
-print(f"On-time points: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%")
-print(f"Overdue points: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%")
+print(
+    f"On-time points: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%"
+)
+print(
+    f"Overdue points: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%"
+)
 
 print("\nPoints per member:")
 
 for member_id, points in members_ids_to_points.items():
     print(members_id_to_name[member_id], ":", points)
 
-date_and_time = datetime.datetime.now()
+date_and_time = datetime.datetime.now(ZoneInfo("Europe/Warsaw"))
 print(f"Ostatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 # Update stats card with computed stats
-update_stats_card("Statystyki", f"Łączna ilość puntków: {grand_points_sum}\nPunkty zdobyte o czase: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\nPunkty zodbyte po czasie: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\n\nPunkty zdobyte przez osoby o czasie:\n" + "\n".join([f"{members_id_to_name[member_id]}: {points}" for member_id, points in members_ids_to_points.items()]) + f"\n\nOstatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    
-
+update_stats_card(
+    "Statystyki",
+    f"Łączna ilość puntków: {grand_points_sum}\nPunkty zdobyte o czase: {points_on_time}, {points_on_time / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\nPunkty zodbyte po czasie: {points_on_overdue}, {points_on_overdue / grand_points_sum * 100 if grand_points_sum > 0 else 0}%\n\nPunkty zdobyte przez osoby o czasie:\n"
+    + "\n".join(
+        [
+            f"{members_id_to_name[member_id]}: {points}"
+            for member_id, points in members_ids_to_points.items()
+        ]
+    )
+    + f"\n\nOstatnia aktualizacja: {date_and_time.strftime('%Y-%m-%d %H:%M:%S')}",
+)
